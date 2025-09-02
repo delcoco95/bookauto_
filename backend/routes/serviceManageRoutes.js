@@ -10,7 +10,9 @@ router.use(verifyToken, requirePro); // pro auth
 
 // List my services
 router.get('/mine', async (req, res) => {
-  const services = await Service.find({ proId: req.user._id }).sort({ createdAt: -1 });
+  const services = await Service.find({ proId: req.user._id }).sort({
+    createdAt: -1,
+  });
   res.json(services);
 });
 
@@ -28,7 +30,8 @@ const validators = [
 // Create service (requires active subscription)
 router.post('/', requireProActive, validators, async (req, res) => {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+  if (!errors.isEmpty())
+    return res.status(400).json({ errors: errors.array() });
   const service = await Service.create({ ...req.body, proId: req.user._id });
   res.status(201).json(service);
 });
@@ -36,7 +39,8 @@ router.post('/', requireProActive, validators, async (req, res) => {
 // Update service
 router.put('/:id', requireProActive, validators, async (req, res) => {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+  if (!errors.isEmpty())
+    return res.status(400).json({ errors: errors.array() });
   const service = await Service.findOneAndUpdate(
     { _id: req.params.id, proId: req.user._id },
     { $set: req.body },
@@ -48,8 +52,12 @@ router.put('/:id', requireProActive, validators, async (req, res) => {
 
 // Delete service
 router.delete('/:id', requireProActive, async (req, res) => {
-  const result = await Service.deleteOne({ _id: req.params.id, proId: req.user._id });
-  if (!result.deletedCount) return res.status(404).json({ message: 'Service non trouvé' });
+  const result = await Service.deleteOne({
+    _id: req.params.id,
+    proId: req.user._id,
+  });
+  if (!result.deletedCount)
+    return res.status(404).json({ message: 'Service non trouvé' });
   res.json({ message: 'Supprimé' });
 });
 

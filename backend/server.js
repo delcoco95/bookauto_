@@ -29,13 +29,19 @@ connectDB();
 app.use(helmet());
 
 // CORS configuration
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true,
+  })
+);
 
 // Stripe webhook (raw body)
-app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), stripeWebhook);
+app.post(
+  '/api/stripe/webhook',
+  express.raw({ type: 'application/json' }),
+  stripeWebhook
+);
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
@@ -62,9 +68,9 @@ app.get('/api/health', (req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ 
+  res.status(500).json({
     message: 'Something went wrong!',
-    error: process.env.NODE_ENV === 'development' ? err.message : {}
+    error: process.env.NODE_ENV === 'development' ? err.message : {},
   });
 });
 

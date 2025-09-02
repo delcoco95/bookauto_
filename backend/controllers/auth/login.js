@@ -9,7 +9,7 @@ const login = async (req, res) => {
     if (!errors.isEmpty()) {
       return res.status(400).json({
         message: 'Validation failed',
-        errors: errors.array()
+        errors: errors.array(),
       });
     }
 
@@ -18,33 +18,32 @@ const login = async (req, res) => {
     // Find user by email
     const user = await User.findOne({ email }).select('+password');
     if (!user) {
-      return res.status(401).json({ 
-        message: 'Email ou mot de passe incorrect' 
+      return res.status(401).json({
+        message: 'Email ou mot de passe incorrect',
       });
     }
 
     // Check if user is active
     if (!user.isActive) {
-      return res.status(401).json({ 
-        message: 'Compte désactivé. Veuillez contacter le support.' 
+      return res.status(401).json({
+        message: 'Compte désactivé. Veuillez contacter le support.',
       });
     }
 
     // Verify password
     const isValidPassword = await user.comparePassword(password);
     if (!isValidPassword) {
-      return res.status(401).json({ 
-        message: 'Email ou mot de passe incorrect' 
+      return res.status(401).json({
+        message: 'Email ou mot de passe incorrect',
       });
     }
 
-
     // Generate JWT token
     const token = jwt.sign(
-      { 
-        userId: user._id, 
+      {
+        userId: user._id,
         role: user.role,
-        email: user.email 
+        email: user.email,
       },
       process.env.JWT_SECRET,
       { expiresIn: '1h' }
@@ -62,14 +61,13 @@ const login = async (req, res) => {
       message: 'Connexion réussie',
       user: userResponse,
       token,
-      expiresIn: 3600 // 1 hour in seconds
+      expiresIn: 3600, // 1 hour in seconds
     });
-
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: 'Erreur lors de la connexion',
-      error: process.env.NODE_ENV === 'development' ? error.message : {}
+      error: process.env.NODE_ENV === 'development' ? error.message : {},
     });
   }
 };

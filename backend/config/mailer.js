@@ -2,7 +2,11 @@ const nodemailer = require('nodemailer');
 
 // Create reusable transporter object using SMTP transport
 const createTransporter = () => {
-  if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+  if (
+    !process.env.SMTP_HOST ||
+    !process.env.SMTP_USER ||
+    !process.env.SMTP_PASS
+  ) {
     console.warn('⚠️  SMTP configuration incomplete. Email sending disabled.');
     return null;
   }
@@ -21,7 +25,7 @@ const createTransporter = () => {
 // Send email helper function
 const sendEmail = async (to, subject, html, attachments = []) => {
   const transporter = createTransporter();
-  
+
   if (!transporter) {
     console.log('📧 Email sending skipped (SMTP not configured)');
     return { success: false, message: 'SMTP not configured' };
