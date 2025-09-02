@@ -2,12 +2,8 @@ const express = require('express');
 const { verifyToken, requirePro, requireClient } = require('../middleware/auth');
 const createDepositPaymentIntent = require('../controllers/stripe/createDepositPaymentIntent');
 const createProSubscriptionCheckout = require('../controllers/stripe/createProSubscriptionCheckout');
-const webhook = require('../controllers/stripe/webhook');
 
 const router = express.Router();
-
-// Webhook endpoint (must be before JSON parsing middleware)
-router.post('/webhook', express.raw({ type: 'application/json' }), webhook);
 
 // Deposit payment for appointments (client only)
 router.post('/deposit', verifyToken, requireClient, createDepositPaymentIntent);
