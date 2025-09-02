@@ -17,6 +17,8 @@ const proRoutes = require('./routes/proRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+// Stripe webhook must be mounted BEFORE JSON body parser
+const stripeWebhook = require('./controllers/stripe/webhook');
 
 // Connect to MongoDB
 connectDB();
@@ -29,6 +31,9 @@ app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true
 }));
+
+// Stripe webhook (raw body)
+app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), stripeWebhook);
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
