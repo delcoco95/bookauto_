@@ -12,15 +12,12 @@ const appointmentRoutes = require('./routes/appointmentRoutes');
 const conversationRoutes = require('./routes/conversationRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
-const stripeRoutes = require('./routes/stripeRoutes');
 const proRoutes = require('./routes/proRoutes');
 const serviceManageRoutes = require('./routes/serviceManageRoutes');
 const contactRoutes = require('./routes/contactRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-// Stripe webhook must be mounted BEFORE JSON body parser
-const stripeWebhook = require('./controllers/stripe/webhook');
 
 // Connect to MongoDB
 connectDB();
@@ -36,12 +33,6 @@ app.use(
   })
 );
 
-// Stripe webhook (raw body)
-app.post(
-  '/api/stripe/webhook',
-  express.raw({ type: 'application/json' }),
-  stripeWebhook
-);
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
@@ -55,7 +46,6 @@ app.use('/api/appointments', appointmentRoutes);
 app.use('/api/conversations', conversationRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/reviews', reviewRoutes);
-app.use('/api/stripe', stripeRoutes);
 app.use('/api/pro', proRoutes);
 app.use('/api/services/manage', serviceManageRoutes);
 app.use('/api/contact', contactRoutes);

@@ -78,7 +78,6 @@ const userSchema = new mongoose.Schema({
   },
   
   // Subscription
-  stripeCustomerId: String,
   subscriptionStatus: {
     type: String,
     enum: ['inactive', 'trialing', 'active', 'past_due', 'canceled', 'unpaid'],
@@ -134,11 +133,5 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-// Check if pro subscription is active
-userSchema.methods.hasActiveSubscription = function() {
-  return this.role === 'pro' && 
-    ['trialing', 'active'].includes(this.subscriptionStatus) &&
-    (!this.subscriptionEndsAt || this.subscriptionEndsAt > new Date());
-};
 
 module.exports = mongoose.model('User', userSchema);

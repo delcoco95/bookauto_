@@ -65,7 +65,7 @@ router.get('/', [
         path: 'proId',
         match: {
           isActive: true,
-          subscriptionStatus: { $in: ['active', 'trialing'] },
+          
           ...(ratingMin > 0 && { averageRating: { $gte: ratingMin } }),
         },
         select: 'firstName lastName companyName averageRating totalReviews latitude longitude serviceRadius categories',
@@ -132,7 +132,7 @@ router.get('/', [
           path: 'proId',
           match: {
             isActive: true,
-            subscriptionStatus: { $in: ['active', 'trialing'] },
+            
             ...(ratingMin > 0 && { averageRating: { $gte: ratingMin } }),
           },
           select: 'firstName lastName companyName averageRating totalReviews latitude longitude serviceRadius categories',

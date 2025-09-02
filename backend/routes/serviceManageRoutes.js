@@ -1,7 +1,6 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const { verifyToken, requirePro } = require('../middleware/auth');
-const { requireProActive } = require('../middleware/proAccess');
 const Service = require('../models/Service');
 
 const router = express.Router();
@@ -28,7 +27,7 @@ const validators = [
 ];
 
 // Create service (requires active subscription)
-router.post('/', requireProActive, validators, async (req, res) => {
+router.post('/', validators, async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty())
     return res.status(400).json({ errors: errors.array() });
@@ -37,7 +36,7 @@ router.post('/', requireProActive, validators, async (req, res) => {
 });
 
 // Update service
-router.put('/:id', requireProActive, validators, async (req, res) => {
+router.put('/:id', validators, async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty())
     return res.status(400).json({ errors: errors.array() });
@@ -51,7 +50,7 @@ router.put('/:id', requireProActive, validators, async (req, res) => {
 });
 
 // Delete service
-router.delete('/:id', requireProActive, async (req, res) => {
+router.delete('/:id', async (req, res) => {
   const result = await Service.deleteOne({
     _id: req.params.id,
     proId: req.user._id,

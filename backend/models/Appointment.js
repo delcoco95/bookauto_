@@ -86,14 +86,11 @@ const appointmentSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  depositPaymentIntentId: String,
-  depositChargeId: String,
   
   // Refund tracking
   refundAmount: Number,
   refundReason: String,
   refundProcessedAt: Date,
-  refundId: String,
   
   // Communication
   clientNotes: String,
