@@ -38,13 +38,6 @@ const login = async (req, res) => {
       });
     }
 
-    // Check pro subscription status
-    if (user.role === 'pro' && !user.hasActiveSubscription()) {
-      return res.status(403).json({ 
-        message: 'Abonnement professionnel expiré. Veuillez renouveler votre abonnement.',
-        subscriptionRequired: true
-      });
-    }
 
     // Generate JWT token
     const token = jwt.sign(
