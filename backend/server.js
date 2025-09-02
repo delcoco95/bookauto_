@@ -14,6 +14,8 @@ const messageRoutes = require('./routes/messageRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const stripeRoutes = require('./routes/stripeRoutes');
 const proRoutes = require('./routes/proRoutes');
+const serviceManageRoutes = require('./routes/serviceManageRoutes');
+const contactRoutes = require('./routes/contactRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -49,6 +51,8 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/stripe', stripeRoutes);
 app.use('/api/pro', proRoutes);
+app.use('/api/services/manage', serviceManageRoutes);
+app.use('/api/contact', contactRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
