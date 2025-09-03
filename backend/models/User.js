@@ -105,7 +105,11 @@ const userSchema = new mongoose.Schema({
   // Verification
   isEmailVerified: { type: Boolean, default: false },
   isSiretVerified: { type: Boolean, default: false },
-  
+
+  // Password reset
+  passwordResetToken: String,
+  passwordResetExpires: Date,
+
 }, {
   timestamps: true,
 });

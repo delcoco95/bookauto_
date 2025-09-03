@@ -3,6 +3,8 @@ const { body } = require('express-validator');
 const register = require('../controllers/auth/register');
 const login = require('../controllers/auth/login');
 const { authLimiter } = require('../middleware/rate');
+const forgotPassword = require('../controllers/auth/forgotPassword');
+const resetPassword = require('../controllers/auth/resetPassword');
 
 const router = express.Router();
 
@@ -73,5 +75,9 @@ const loginValidation = [
 // Routes
 router.post('/register', proRegisterValidation, register);
 router.post('/login', loginValidation, login);
+
+// Password reset
+router.post('/forgot-password', forgotPassword.validate, forgotPassword.handler);
+router.post('/reset-password', resetPassword.validate, resetPassword.handler);
 
 module.exports = router;

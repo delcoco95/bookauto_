@@ -9,6 +9,8 @@ const ProDetail = lazy(() => import('../pages/ProDetail'));
 const AuthLogin = lazy(() => import('../pages/AuthLogin'));
 const AuthRegisterClient = lazy(() => import('../pages/AuthRegisterClient'));
 const AuthRegisterPro = lazy(() => import('../pages/AuthRegisterPro'));
+const ForgotPassword = lazy(() => import('../pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('../pages/ResetPassword'));
 const About = lazy(() => import('../pages/About'));
 const Contact = lazy(() => import('../pages/Contact'));
 const FAQ = lazy(() => import('../pages/FAQ'));
@@ -24,6 +26,8 @@ const PublicRoutes = () => {
       <Route path="/pros" element={<ProList />} />
       <Route path="/pro/:id" element={<ProDetail />} />
       <Route path="/login" element={<AuthLogin />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/register" element={<AuthRegisterClient />} />
       <Route path="/register/pro" element={<AuthRegisterPro />} />
       <Route path="/about" element={<About />} />
