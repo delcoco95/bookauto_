@@ -67,9 +67,7 @@ const loginValidation = [
     .isEmail()
     .normalizeEmail()
     .withMessage('Please provide a valid email'),
-  body('password')
-    .notEmpty()
-    .withMessage('Password is required'),
+  body('password').notEmpty().withMessage('Password is required'),
 ];
 
 // Routes
@@ -77,7 +75,11 @@ router.post('/register', proRegisterValidation, register);
 router.post('/login', loginValidation, login);
 
 // Password reset
-router.post('/forgot-password', forgotPassword.validate, forgotPassword.handler);
+router.post(
+  '/forgot-password',
+  forgotPassword.validate,
+  forgotPassword.handler
+);
 router.post('/reset-password', resetPassword.validate, resetPassword.handler);
 
 module.exports = router;

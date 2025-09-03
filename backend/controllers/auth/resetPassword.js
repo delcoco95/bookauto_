@@ -10,12 +10,17 @@ exports.handler = async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.length === 0 && !errors.isEmpty()) {
-      return res.status(400).json({ message: 'Validation échouée', errors: errors.array() });
+      return res
+        .status(400)
+        .json({ message: 'Validation échouée', errors: errors.array() });
     }
 
     const { token, password } = req.body;
 
-    const user = await User.findOne({ passwordResetToken: token, passwordResetExpires: { $gt: new Date() } }).select('+password');
+    const user = await User.findOne({
+      passwordResetToken: token,
+      passwordResetExpires: { $gt: new Date() },
+    }).select('+password');
     if (!user) {
       return res.status(400).json({ message: 'Lien invalide ou expiré' });
     }

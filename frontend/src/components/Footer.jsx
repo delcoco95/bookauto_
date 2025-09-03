@@ -17,7 +17,8 @@ const Footer = () => {
               <span className="ml-2 text-xl font-bold">Bookauto</span>
             </div>
             <p className="text-gray-400 text-sm">
-              La plateforme de réservation pour vos services auto, plomberie et serrurerie.
+              La plateforme de réservation pour vos services auto, plomberie et
+              serrurerie.
             </p>
           </div>
 
@@ -25,9 +26,27 @@ const Footer = () => {
           <div>
             <h3 className="text-lg font-semibold mb-4">Services</h3>
             <ul className="space-y-2 text-sm text-gray-400">
-              <li><Link to="/search?category=auto" className="hover:text-white">Auto</Link></li>
-              <li><Link to="/search?category=plomberie" className="hover:text-white">Plomberie</Link></li>
-              <li><Link to="/search?category=serrurerie" className="hover:text-white">Serrurerie</Link></li>
+              <li>
+                <Link to="/search?category=auto" className="hover:text-white">
+                  Auto
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/search?category=plomberie"
+                  className="hover:text-white"
+                >
+                  Plomberie
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/search?category=serrurerie"
+                  className="hover:text-white"
+                >
+                  Serrurerie
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -35,10 +54,26 @@ const Footer = () => {
           <div>
             <h3 className="text-lg font-semibold mb-4">Entreprise</h3>
             <ul className="space-y-2 text-sm text-gray-400">
-              <li><Link to="/about" className="hover:text-white">À propos</Link></li>
-              <li><Link to="/contact" className="hover:text-white">Contact</Link></li>
-              <li><Link to="/faq" className="hover:text-white">FAQ</Link></li>
-              <li><Link to="/register/pro" className="hover:text-white">Devenir pro</Link></li>
+              <li>
+                <Link to="/about" className="hover:text-white">
+                  À propos
+                </Link>
+              </li>
+              <li>
+                <Link to="/contact" className="hover:text-white">
+                  Contact
+                </Link>
+              </li>
+              <li>
+                <Link to="/faq" className="hover:text-white">
+                  FAQ
+                </Link>
+              </li>
+              <li>
+                <Link to="/register/pro" className="hover:text-white">
+                  Devenir pro
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -46,9 +81,21 @@ const Footer = () => {
           <div>
             <h3 className="text-lg font-semibold mb-4">Légal</h3>
             <ul className="space-y-2 text-sm text-gray-400">
-              <li><Link to="/legal" className="hover:text-white">Mentions légales</Link></li>
-              <li><Link to="/terms" className="hover:text-white">CGU</Link></li>
-              <li><Link to="/privacy" className="hover:text-white">Confidentialité</Link></li>
+              <li>
+                <Link to="/legal" className="hover:text-white">
+                  Mentions légales
+                </Link>
+              </li>
+              <li>
+                <Link to="/terms" className="hover:text-white">
+                  CGU
+                </Link>
+              </li>
+              <li>
+                <Link to="/privacy" className="hover:text-white">
+                  Confidentialité
+                </Link>
+              </li>
             </ul>
           </div>
         </div>

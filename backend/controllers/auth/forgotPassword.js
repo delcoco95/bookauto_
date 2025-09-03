@@ -11,14 +11,17 @@ exports.handler = async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ message: 'Validation échouée', errors: errors.array() });
+      return res
+        .status(400)
+        .json({ message: 'Validation échouée', errors: errors.array() });
     }
 
     const { email } = req.body;
 
     // Always respond success to avoid user enumeration
     const genericResponse = {
-      message: 'Si un compte existe avec cet email, un lien de réinitialisation a été envoyé.'
+      message:
+        'Si un compte existe avec cet email, un lien de réinitialisation a été envoyé.',
     };
 
     const user = await User.findOne({ email });
