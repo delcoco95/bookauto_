@@ -1,91 +1,34 @@
-const stripe = require('../../config/stripe');
-const Appointment = require('../../models/Appointment');
-const Service = require('../../models/Service');
+require('dotenv').config();
+const Stripe = require('stripe');
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: '2023-10-16',
+});
 
-const createDepositPaymentIntent = async (req, res) => {
+module.exports = async function createDepositPaymentIntent(req, res) {
   try {
-    const { appointmentId } = req.body;
-    const userId = req.user._id;
-
-    // Find the appointment
-    const appointment = await Appointment.findById(appointmentId)
-      .populate('serviceId')
-      .populate('clientId')
-      .populate('proId');
-
-    if (!appointment) {
-      return res.status(404).json({ message: 'Rendez-vous non trouvé' });
+    // Ex: { amount: 50, currency: 'eur' }
+    const { amount, currency = 'eur', metadata = {} } = req.body || {};
+    if (!amount || isNaN(amount) || Number(amount) <= 0) {
+      return res.status(400).json({ message: 'amount requis (en euros, nombre > 0)' });
     }
+    const amountInCents = Math.round(Number(amount) * 100);
 
-    // Verify the user is the client
-    if (appointment.clientId._id.toString() !== userId.toString()) {
-      return res.status(403).json({ message: 'Non autorisé' });
-    }
-
-    // Check if appointment is still pending
-    if (appointment.status !== 'pending') {
-      return res.status(400).json({ 
-        message: 'Ce rendez-vous ne peut plus être payé' 
-      });
-    }
-
-    // Check if payment intent already exists
-    if (appointment.depositPaymentIntentId) {
-      const existingIntent = await stripe.paymentIntents.retrieve(
-        appointment.depositPaymentIntentId
-      );
-      
-      if (existingIntent.status === 'succeeded') {
-        return res.status(400).json({ 
-          message: 'Le dépôt a déjà été payé' 
-        });
-      }
-      
-      // Return existing intent if still valid
-      if (['requires_payment_method', 'requires_confirmation'].includes(existingIntent.status)) {
-        return res.json({
-          clientSecret: existingIntent.client_secret,
-          paymentIntentId: existingIntent.id,
-        });
-      }
-    }
-
-    // Calculate deposit amount (20% of final price)
-    const depositAmount = Math.round(appointment.finalPrice * 0.20 * 100); // in cents
-
-    // Create payment intent
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: depositAmount,
-      currency: 'eur',
-      customer: appointment.clientId.stripeCustomerId || undefined,
-      metadata: {
-        appointmentId: appointment._id.toString(),
-        clientId: appointment.clientId._id.toString(),
-        proId: appointment.proId._id.toString(),
-        serviceId: appointment.serviceId._id.toString(),
-        type: 'deposit',
-      },
-      description: `Acompte pour ${appointment.serviceId.name} - ${appointment.proId.companyName}`,
-      setup_future_usage: 'off_session',
+    const pi = await stripe.paymentIntents.create({
+      amount: amountInCents,
+      currency,
+      automatic_payment_methods: { enabled: true },
+      metadata,
     });
 
-    // Update appointment with payment intent ID
-    appointment.depositPaymentIntentId = paymentIntent.id;
-    await appointment.save();
-
-    res.json({
-      clientSecret: paymentIntent.client_secret,
-      paymentIntentId: paymentIntent.id,
-      amount: depositAmount,
+    return res.status(201).json({
+      clientSecret: pi.client_secret,
+      id: pi.id,
+      amount: pi.amount,
+      currency: pi.currency,
+      status: pi.status,
     });
-
-  } catch (error) {
-    console.error('Error creating payment intent:', error);
-    res.status(500).json({ 
-      message: 'Erreur lors de la création du paiement',
-      error: process.env.NODE_ENV === 'development' ? error.message : {}
-    });
+  } catch (err) {
+    console.error('Stripe error:', err?.message || err);
+    return res.status(500).json({ message: 'Stripe error', error: err?.message || String(err) });
   }
 };
-
-module.exports = createDepositPaymentIntent;
