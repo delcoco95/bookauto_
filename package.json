@@ -6,7 +6,9 @@
     "dev:db": "docker compose up -d mongodb",
     "dev:backend": "nodemon backend/server.js",
     "dev:frontend": "cd frontend && vite --port 3000",
-    "dev": "npm run dev:db && npm run dev:backend",
+    "dev": "npm run dev --prefix frontend",
+    "build": "npm run build --prefix frontend",
+    "start": "npm run preview --prefix frontend",
     "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
     "lint": "eslint . --ext .js,.jsx",
     "format": "prettier --write ."
