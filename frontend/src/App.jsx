@@ -9,6 +9,7 @@ import Footer from './components/Footer';
 const PublicRoutes = lazy(() => import('./routes/PublicRoutes'));
 const ClientRoutes = lazy(() => import('./routes/ClientRoutes'));
 const ProRoutes = lazy(() => import('./routes/ProRoutes'));
+const AdminRoutes = lazy(() => import('./routes/AdminRoutes'));
 
 // Loading component
 const Loading = () => (
@@ -33,8 +34,11 @@ function App() {
                 {/* Client dashboard routes */}
                 <Route path="/client/*" element={<ClientRoutes />} />
                 
-                {/* Pro dashboard routes */}
-                <Route path="/pro/*" element={<ProRoutes />} />
+                {/* Pro dashboard routes — /pro/dashboard/* avoids conflict with /pro/:id public profile */}
+                <Route path="/pro/dashboard/*" element={<ProRoutes />} />
+
+                {/* Admin dashboard routes */}
+                <Route path="/admin/*" element={<AdminRoutes />} />
               </Routes>
             </Suspense>
           </main>

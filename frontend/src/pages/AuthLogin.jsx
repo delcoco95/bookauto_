@@ -38,7 +38,16 @@ const AuthLogin = () => {
 
     if (result.success) {
       showToast('Connexion réussie !', 'success');
-      navigate(from, { replace: true });
+      const role = result.user?.role;
+      if (role === 'admin') {
+        navigate('/admin', { replace: true });
+      } else if (role === 'pro') {
+        navigate('/pro/dashboard', { replace: true });
+      } else if (role === 'client') {
+        navigate('/client', { replace: true });
+      } else {
+        navigate(from === '/' ? '/' : from, { replace: true });
+      }
     } else {
       showToast(result.error, 'error');
     }

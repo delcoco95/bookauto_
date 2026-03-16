@@ -1,398 +1,216 @@
-import React, { useState } from 'react';
-import { Plus, Edit, Trash, Eye, EyeOff, Save, X } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Plus, Edit, Trash2, Eye, EyeOff, Save, X, Clock, Euro, Zap, Car } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import { useUI } from '../../context/UIContext';
+import { listMyServices, createService, updateService, deleteService } from '../../services/services';
+
+const SUB_CATEGORIES = {
+  auto:        ['Réparation', 'Entretien', 'Dépannage', 'Vidange', 'Pneus', 'Carrosserie', 'Diagnostic', 'Autre'],
+  plomberie:   ['Dépannage urgence', 'Installation', 'Rénovation', 'Détartrage', 'Fuite', 'Autre'],
+  serrurerie:  ['Ouverture de porte', 'Installation serrure', 'Sécurité', 'Dépannage', 'Blindage', 'Autre'],
+};
+
+const CATEGORY_LABELS = { auto: 'Automobile', plomberie: 'Plomberie', serrurerie: 'Serrurerie' };
 
 const ProServices = () => {
-  const [services, setServices] = useState([
-    {
-      id: 1,
-      name: 'Réparation moteur',
-      category: 'auto',
-      subCategory: 'Réparation',
-      description: 'Diagnostic et réparation de tous problèmes moteur',
-      durationMinutes: 120,
-      priceTTC: 150,
-      isActive: true,
-      isEmergency: false,
-      requiresDisplacement: true,
-    },
-    {
-      id: 2,
-      name: 'Vidange complète',
-      category: 'auto',
-      subCategory: 'Entretien',
-      description: 'Vidange huile moteur + changement filtre',
-      durationMinutes: 45,
-      priceTTC: 80,
-      isActive: true,
-      isEmergency: false,
-      requiresDisplacement: false,
-    },
-  ]);
-
-  const [editingService, setEditingService] = useState(null);
-  const [showCreateForm, setShowCreateForm] = useState(false);
+  const { user } = useAuth();
   const { showToast } = useUI();
+  const proCategory = user?.categories?.[0] || 'auto';
+  const subCatOptions = SUB_CATEGORIES[proCategory] || SUB_CATEGORIES.auto;
 
-  const categoryOptions = {
-    auto: ['Réparation', 'Entretien', 'Dépannage'],
-    plomberie: ['Dépannage', 'Installation', 'Rénovation'],
-    serrurerie: ['Ouverture de porte', 'Installation', 'Sécurité'],
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  const defaultForm = {
+    name: '', subCategory: '', description: '',
+    durationMinutes: 60, priceTTC: 0,
+    isActive: true, isEmergency: false, requiresDisplacement: true,
   };
+  const [formData, setFormData] = useState(defaultForm);
 
-  const defaultService = {
-    name: '',
-    category: 'auto',
-    subCategory: '',
-    description: '',
-    durationMinutes: 60,
-    priceTTC: 0,
-    isActive: true,
-    isEmergency: false,
-    requiresDisplacement: true,
-  };
+  const load = useCallback(async () => {
+    setLoading(true);
+    const res = await listMyServices();
+    setServices(res.success ? res.data.services || res.data : []);
+    setLoading(false);
+  }, []);
 
-  const [formData, setFormData] = useState(defaultService);
+  useEffect(() => { load(); }, [load]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : 
-               (name === 'durationMinutes' || name === 'priceTTC') ? 
-               parseFloat(value) || 0 : value,
-      ...(name === 'category' && { subCategory: '' })
+      [name]: type === 'checkbox' ? checked : (name === 'durationMinutes' || name === 'priceTTC') ? parseFloat(value) || 0 : value,
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
     if (!formData.name || !formData.subCategory || formData.priceTTC <= 0) {
-      showToast('Veuillez remplir tous les champs obligatoires', 'error');
+      showToast('Remplissez tous les champs obligatoires', 'error');
       return;
     }
-
-    if (editingService) {
-      // Update existing service
-      setServices(prev => prev.map(service => 
-        service.id === editingService.id ? { ...formData, id: editingService.id } : service
-      ));
-      showToast('Service mis à jour avec succès', 'success');
-      setEditingService(null);
+    setSubmitting(true);
+    const payload = { ...formData, category: proCategory };
+    const res = editingId
+      ? await updateService(editingId, payload)
+      : await createService(payload);
+    if (res.success) {
+      showToast(editingId ? 'Service mis à jour ✅' : 'Service créé ✅', 'success');
+      resetForm();
+      load();
     } else {
-      // Create new service
-      const newService = { ...formData, id: Date.now() };
-      setServices(prev => [...prev, newService]);
-      showToast('Service créé avec succès', 'success');
-      setShowCreateForm(false);
+      showToast(res.error || 'Erreur', 'error');
     }
-    
-    setFormData(defaultService);
+    setSubmitting(false);
   };
 
-  const handleEdit = (service) => {
-    setFormData(service);
-    setEditingService(service);
-    setShowCreateForm(false);
+  const handleEdit = (s) => {
+    setFormData({ name: s.name, subCategory: s.subCategory, description: s.description || '', durationMinutes: s.durationMinutes, priceTTC: s.priceTTC, isActive: s.isActive, isEmergency: s.isEmergency, requiresDisplacement: s.requiresDisplacement });
+    setEditingId(s._id);
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleCancelEdit = () => {
-    setFormData(defaultService);
-    setEditingService(null);
-    setShowCreateForm(false);
+  const handleDelete = async (id) => {
+    if (!window.confirm('Supprimer ce service ?')) return;
+    const res = await deleteService(id);
+    if (res.success) { showToast('Service supprimé', 'info'); load(); }
+    else showToast('Erreur suppression', 'error');
   };
 
-  const handleDelete = (serviceId) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce service ?')) {
-      setServices(prev => prev.filter(service => service.id !== serviceId));
-      showToast('Service supprimé', 'info');
-    }
+  const handleToggleActive = async (s) => {
+    const res = await updateService(s._id, { isActive: !s.isActive });
+    if (res.success) load();
   };
 
-  const toggleActive = (serviceId) => {
-    setServices(prev => prev.map(service => 
-      service.id === serviceId ? { ...service, isActive: !service.isActive } : service
-    ));
+  const resetForm = () => {
+    setFormData(defaultForm);
+    setEditingId(null);
+    setShowForm(false);
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="flex justify-between items-start mb-8">
+        <div className="flex justify-between items-start mb-8 flex-wrap gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Mes services</h1>
-            <p className="text-gray-600 mt-2">
-              Gérez vos services, tarifs et disponibilités.
+            <p className="text-gray-500 mt-1 flex items-center gap-2">
+              <Car className="w-4 h-4" /> Domaine : <span className="font-medium text-gray-700">{CATEGORY_LABELS[proCategory]}</span>
+              <span className="text-gray-300 mx-1">·</span> {services.length} service{services.length !== 1 ? 's' : ''}
             </p>
           </div>
-          <button
-            onClick={() => {
-              setShowCreateForm(true);
-              setEditingService(null);
-              setFormData(defaultService);
-            }}
-            className="btn btn-primary"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Nouveau service
-          </button>
+          {!showForm && (
+            <button onClick={() => { resetForm(); setShowForm(true); }} className="btn btn-primary">
+              <Plus className="w-4 h-4 mr-2" /> Nouveau service
+            </button>
+          )}
         </div>
 
         {/* Create/Edit Form */}
-        {(showCreateForm || editingService) && (
-          <div className="card mb-8">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">
-              {editingService ? 'Modifier le service' : 'Créer un nouveau service'}
-            </h2>
-
+        {showForm && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900">{editingId ? 'Modifier le service' : 'Créer un service'}</h2>
+              <button onClick={resetForm} className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"><X className="w-5 h-5" /></button>
+            </div>
             <form onSubmit={handleSubmit}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Service Name */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nom du service *
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    className="input"
-                    placeholder="Ex: Réparation moteur"
-                    required
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Nom du service *</label>
+                  <input type="text" name="name" value={formData.name} onChange={handleChange} className="input" placeholder="Ex: Réparation moteur" required />
                 </div>
-
-                {/* Category */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Catégorie *
-                  </label>
-                  <select
-                    name="category"
-                    value={formData.category}
-                    onChange={handleChange}
-                    className="input"
-                    required
-                  >
-                    <option value="auto">Auto</option>
-                    <option value="plomberie">Plomberie</option>
-                    <option value="serrurerie">Serrurerie</option>
-                  </select>
-                </div>
-
-                {/* Sub Category */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Type de service *
-                  </label>
-                  <select
-                    name="subCategory"
-                    value={formData.subCategory}
-                    onChange={handleChange}
-                    className="input"
-                    required
-                  >
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Type de service *</label>
+                  <select name="subCategory" value={formData.subCategory} onChange={handleChange} className="input" required>
                     <option value="">Choisir...</option>
-                    {categoryOptions[formData.category]?.map(subCat => (
-                      <option key={subCat} value={subCat}>{subCat}</option>
-                    ))}
+                    {subCatOptions.map(sc => <option key={sc} value={sc}>{sc}</option>)}
                   </select>
                 </div>
-
-                {/* Duration */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Durée (minutes) *
-                  </label>
-                  <input
-                    type="number"
-                    name="durationMinutes"
-                    value={formData.durationMinutes}
-                    onChange={handleChange}
-                    className="input"
-                    min="15"
-                    max="480"
-                    required
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Durée (minutes) *</label>
+                  <input type="number" name="durationMinutes" value={formData.durationMinutes} onChange={handleChange} className="input" min="15" max="480" required />
                 </div>
-
-                {/* Price */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Prix TTC (€) *
-                  </label>
-                  <input
-                    type="number"
-                    name="priceTTC"
-                    value={formData.priceTTC}
-                    onChange={handleChange}
-                    className="input"
-                    min="0"
-                    step="0.01"
-                    required
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Prix TTC (€) *</label>
+                  <input type="number" name="priceTTC" value={formData.priceTTC} onChange={handleChange} className="input" min="0" step="0.01" required />
                 </div>
-
-                {/* Description */}
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Description
-                  </label>
-                  <textarea
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    className="input"
-                    rows={3}
-                    placeholder="Décrivez votre service..."
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Description</label>
+                  <textarea name="description" value={formData.description} onChange={handleChange} className="input" rows={3} placeholder="Décrivez votre service..." />
                 </div>
-
-                {/* Options */}
-                <div className="md:col-span-2">
-                  <div className="space-y-3">
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        name="requiresDisplacement"
-                        checked={formData.requiresDisplacement}
-                        onChange={handleChange}
-                        className="mr-2"
-                      />
-                      Nécessite un déplacement
+                <div className="md:col-span-2 flex flex-wrap gap-6">
+                  {[
+                    { name: 'requiresDisplacement', label: 'Nécessite un déplacement' },
+                    { name: 'isEmergency', label: 'Service d\'urgence (disponible 24h/24)' },
+                    { name: 'isActive', label: 'Service actif (visible par les clients)' },
+                  ].map(opt => (
+                    <label key={opt.name} className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" name={opt.name} checked={formData[opt.name]} onChange={handleChange} className="w-4 h-4 accent-primary-600" />
+                      <span className="text-sm text-gray-700">{opt.label}</span>
                     </label>
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        name="isEmergency"
-                        checked={formData.isEmergency}
-                        onChange={handleChange}
-                        className="mr-2"
-                      />
-                      Service d'urgence
-                    </label>
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        name="isActive"
-                        checked={formData.isActive}
-                        onChange={handleChange}
-                        className="mr-2"
-                      />
-                      Service actif
-                    </label>
-                  </div>
+                  ))}
                 </div>
               </div>
-
-              {/* Action Buttons */}
-              <div className="flex justify-end space-x-4 mt-6">
-                <button
-                  type="button"
-                  onClick={handleCancelEdit}
-                  className="btn btn-outline"
-                >
-                  <X className="w-4 h-4 mr-2" />
-                  Annuler
+              <div className="flex gap-3 mt-6 pt-6 border-t border-gray-100">
+                <button type="submit" disabled={submitting} className="btn btn-primary">
+                  <Save className="w-4 h-4 mr-2" />{submitting ? 'Sauvegarde...' : editingId ? 'Mettre à jour' : 'Créer le service'}
                 </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  {editingService ? 'Mettre à jour' : 'Créer'}
-                </button>
+                <button type="button" onClick={resetForm} className="btn btn-outline">Annuler</button>
               </div>
             </form>
           </div>
         )}
 
         {/* Services List */}
-        <div className="space-y-4">
-          {services.length === 0 ? (
-            <div className="card text-center py-12">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Aucun service
-              </h3>
-              <p className="text-gray-600 mb-4">
-                Créez votre premier service pour commencer à recevoir des réservations.
-              </p>
-              <button
-                onClick={() => setShowCreateForm(true)}
-                className="btn btn-primary"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Créer un service
-              </button>
-            </div>
-          ) : (
-            services.map((service) => (
-              <div key={service.id} className="card">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {service.name}
-                      </h3>
-                      <span className="badge badge-info">
-                        {service.category}
-                      </span>
-                      {service.isEmergency && (
-                        <span className="badge badge-warning">Urgence</span>
-                      )}
-                      {!service.isActive && (
-                        <span className="badge badge-error">Inactif</span>
-                      )}
+        {loading ? (
+          <div className="flex justify-center py-16"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-600" /></div>
+        ) : services.length === 0 ? (
+          <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+            <Plus className="w-14 h-14 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500 font-medium mb-4">Aucun service créé pour le moment.</p>
+            <button onClick={() => setShowForm(true)} className="btn btn-primary">Créer mon premier service</button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {services.map(s => (
+              <div key={s._id} className={`bg-white rounded-xl border ${s.isActive ? 'border-gray-100' : 'border-gray-200 opacity-70'} shadow-sm overflow-hidden`}>
+                <div className="p-5 flex items-center gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-semibold text-gray-900">{s.name}</h3>
+                      {s.isEmergency && <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full font-medium flex items-center gap-1"><Zap className="w-3 h-3" /> Urgence</span>}
+                      {!s.isActive && <span className="bg-gray-100 text-gray-500 text-xs px-2 py-0.5 rounded-full">Désactivé</span>}
                     </div>
-                    
-                    <p className="text-gray-600 mt-1">{service.description}</p>
-                    
-                    <div className="flex items-center space-x-6 mt-3 text-sm text-gray-500">
-                      <span>Type: {service.subCategory}</span>
-                      <span>Durée: {service.durationMinutes}min</span>
-                      <span>Prix: {service.priceTTC}€</span>
-                      {service.requiresDisplacement && <span>À domicile</span>}
+                    <p className="text-sm text-gray-500 mt-0.5">{s.subCategory}</p>
+                    {s.description && <p className="text-xs text-gray-400 mt-1 line-clamp-1">{s.description}</p>}
+                    <div className="flex items-center gap-4 mt-2">
+                      <span className="flex items-center gap-1 text-xs text-gray-500"><Clock className="w-3.5 h-3.5" />{s.durationMinutes} min</span>
+                      <span className="flex items-center gap-1 text-sm font-bold text-primary-600"><Euro className="w-3.5 h-3.5" />{s.priceTTC} TTC</span>
                     </div>
                   </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => toggleActive(service.id)}
-                      className={`p-2 rounded-lg ${
-                        service.isActive 
-                          ? 'text-green-600 hover:bg-green-50' 
-                          : 'text-gray-400 hover:bg-gray-50'
-                      }`}
-                      title={service.isActive ? 'Désactiver' : 'Activer'}
-                    >
-                      {service.isActive ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <button onClick={() => handleToggleActive(s)} className={`p-2 rounded-lg ${s.isActive ? 'bg-green-50 text-green-600 hover:bg-green-100' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`} title={s.isActive ? 'Désactiver' : 'Activer'}>
+                      {s.isActive ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                     </button>
-                    
-                    <button
-                      onClick={() => handleEdit(service)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
-                      title="Modifier"
-                    >
-                      <Edit className="w-5 h-5" />
+                    <button onClick={() => handleEdit(s)} className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100" title="Modifier">
+                      <Edit className="w-4 h-4" />
                     </button>
-                    
-                    <button
-                      onClick={() => handleDelete(service.id)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                      title="Supprimer"
-                    >
-                      <Trash className="w-5 h-5" />
+                    <button onClick={() => handleDelete(s._id)} className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100" title="Supprimer">
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
               </div>
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

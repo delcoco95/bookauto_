@@ -21,9 +21,14 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
 
   // Check role if specified
   if (requiredRole && user?.role !== requiredRole) {
+    // Admin can access everything
+    if (user?.role === 'admin') {
+      return children;
+    }
     // Redirect to appropriate dashboard or home
-    const redirectPath = user?.role === 'pro' ? '/pro' : 
-                        user?.role === 'client' ? '/client' : '/';
+    const redirectPath = user?.role === 'pro' ? '/pro/dashboard' : 
+                        user?.role === 'client' ? '/client' : 
+                        user?.role === 'admin' ? '/admin' : '/';
     return <Navigate to={redirectPath} replace />;
   }
 

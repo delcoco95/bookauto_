@@ -56,7 +56,7 @@ const Header = () => {
             {isAuthenticated ? (
               <div className="flex items-center space-x-4">
                 <Link
-                  to={user?.role === 'pro' ? '/pro' : '/client'}
+                  to={user?.role === 'admin' ? '/admin' : user?.role === 'pro' ? '/pro/dashboard' : '/client'}
                   className="flex items-center space-x-2 text-gray-700 hover:text-primary-600"
                 >
                   <User className="w-4 h-4" />
@@ -121,7 +121,7 @@ const Header = () => {
               {isAuthenticated ? (
                 <div className="border-t border-gray-200 pt-3 mt-3">
                   <Link
-                    to={user?.role === 'pro' ? '/pro' : '/client'}
+                   to={user?.role === 'admin' ? '/admin' : user?.role === 'pro' ? '/pro/dashboard' : '/client'}
                     onClick={closeMobileMenu}
                     className="block px-3 py-2 text-base font-medium text-gray-700"
                   >

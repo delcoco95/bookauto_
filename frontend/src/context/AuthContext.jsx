@@ -101,11 +101,7 @@ export const AuthProvider = ({ children }) => {
       dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: true });
       dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
 
-      const response = await apiRequest.post('/api/auth/login', {
-        email,
-        password,
-      });
-
+      const response = await apiRequest.post('/api/auth/login', { email, password });
       const { user, token } = response.data;
 
       // Save to localStorage
@@ -117,7 +113,7 @@ export const AuthProvider = ({ children }) => {
         payload: { user, token }
       });
 
-      return { success: true };
+      return { success: true, user };
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Erreur de connexion';
       dispatch({ type: AUTH_ACTIONS.SET_ERROR, payload: errorMessage });
@@ -125,7 +121,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Register function
+// Register function
   const register = async (userData) => {
     try {
       dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: true });
@@ -145,9 +141,10 @@ export const AuthProvider = ({ children }) => {
 
       return { success: true };
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Erreur d\'inscription';
+      const errData = error.response?.data;
+      const errorMessage = errData?.message || "Erreur d'inscription";
       dispatch({ type: AUTH_ACTIONS.SET_ERROR, payload: errorMessage });
-      return { success: false, error: errorMessage };
+      return { success: false, error: errorMessage, errors: errData?.errors || null };
     }
   };
 
@@ -156,6 +153,21 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('bookauto_token');
     localStorage.removeItem('bookauto_user');
     dispatch({ type: AUTH_ACTIONS.LOGOUT });
+  };
+
+  // Refresh user data from server (useful after subscription activation)
+  const refreshUser = async () => {
+    try {
+      const token = localStorage.getItem('bookauto_token');
+      if (!token) return;
+      const res = await apiRequest.get('/api/users/me');
+      const freshUser = res.data.user || res.data;
+      localStorage.setItem('bookauto_user', JSON.stringify(freshUser));
+      dispatch({ type: AUTH_ACTIONS.UPDATE_USER, payload: freshUser });
+      return freshUser;
+    } catch (err) {
+      console.error('refreshUser error:', err);
+    }
   };
 
   // Update user data
@@ -185,6 +197,7 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     updateUser,
+    refreshUser,
     clearError,
     requireAuth,
     requireRole,

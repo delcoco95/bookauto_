@@ -1,0 +1,47 @@
+# === SECRETS - NE JAMAIS COMMITTER ===
+.env
+*/.env
+**/.env
+*.env.local
+
+# === DEPENDENCIES ===
+node_modules/
+*/node_modules/
+**/node_modules/
+
+# === BUILD OUTPUT ===
+frontend/dist/
+frontend/build/
+dist/
+build/
+
+# === LOGS ===
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# === OS ===
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# === IDE ===
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# === VITE CACHE ===
+frontend/.vite/
+frontend/node_modules/.vite/
+**/.vite/
+
+# === PHP / LEFTOVERS ===
+config.php
+api/
+*.php
+
+# === DOCKER (garder docker-compose mais ignorer volumes) ===
+docker-volumes/

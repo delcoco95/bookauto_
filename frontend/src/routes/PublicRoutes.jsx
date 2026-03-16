@@ -17,6 +17,8 @@ const FAQ = lazy(() => import('../pages/FAQ'));
 const Legal = lazy(() => import('../pages/Legal'));
 const Terms = lazy(() => import('../pages/Terms'));
 const Privacy = lazy(() => import('../pages/Privacy'));
+const Pricing = lazy(() => import('../pages/Pricing'));
+const BookAppointment = lazy(() => import('../pages/BookAppointment'));
 
 const PublicRoutes = () => {
   return (
@@ -36,6 +38,8 @@ const PublicRoutes = () => {
       <Route path="/legal" element={<Legal />} />
       <Route path="/terms" element={<Terms />} />
       <Route path="/privacy" element={<Privacy />} />
+      <Route path="/pricing" element={<Pricing />} />
+      <Route path="/pro/:proId/book/:serviceId" element={<BookAppointment />} />
     </Routes>
   );
 };

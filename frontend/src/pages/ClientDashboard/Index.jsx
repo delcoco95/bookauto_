@@ -1,16 +1,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, MessageCircle, Star, User, Clock, CheckCircle } from 'lucide-react';
+import { Calendar, Star, User, Clock, CheckCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const ClientDashboard = () => {
   const { user } = useAuth();
 
-  // Mock data - à remplacer par de vraies données
+  // Mock data - a remplacer par de vraies donnees
   const stats = {
     upcomingBookings: 2,
     completedBookings: 8,
-    unreadMessages: 1,
     pendingReviews: 1,
   };
 
@@ -69,7 +68,7 @@ const ClientDashboard = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="card">
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -88,20 +87,8 @@ const ClientDashboard = () => {
                 <CheckCircle className="h-8 w-8 text-green-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Terminés</p>
+                <p className="text-sm font-medium text-gray-600">Termines</p>
                 <p className="text-2xl font-bold text-gray-900">{stats.completedBookings}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="card">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <MessageCircle className="h-8 w-8 text-purple-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Messages</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.unreadMessages}</p>
               </div>
             </div>
           </div>
@@ -112,7 +99,7 @@ const ClientDashboard = () => {
                 <Star className="h-8 w-8 text-yellow-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Avis à donner</p>
+                <p className="text-sm font-medium text-gray-600">Avis a donner</p>
                 <p className="text-2xl font-bold text-gray-900">{stats.pendingReviews}</p>
               </div>
             </div>
@@ -181,15 +168,7 @@ const ClientDashboard = () => {
                   to="/search"
                   className="block w-full btn btn-primary"
                 >
-                  Nouvelle réservation
-                </Link>
-
-                <Link
-                  to="/client/messages"
-                  className="block w-full btn btn-outline"
-                >
-                  <MessageCircle className="w-4 h-4 mr-2" />
-                  Mes messages
+                  Nouvelle reservation
                 </Link>
 
                 <Link

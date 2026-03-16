@@ -1,283 +1,170 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  Calendar, 
-  MessageCircle, 
-  Star, 
-  DollarSign, 
-  Users, 
-  TrendingUp,
-  Clock,
-  CheckCircle,
-  AlertCircle
-} from 'lucide-react';
+import { Calendar, Star, DollarSign, TrendingUp, Clock, AlertCircle, CheckCircle, XCircle, ArrowRight, Users } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { apiRequest } from '../../services/api';
 
 const ProDashboard = () => {
   const { user } = useAuth();
+  const [stats, setStats] = useState(null);
+  const [recentBookings, setRecentBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data - à remplacer par de vraies données
-  const stats = {
-    pendingBookings: 3,
-    todayBookings: 2,
-    monthlyRevenue: 2450,
-    averageRating: 4.8,
-    totalReviews: 24,
-    activeServices: 5,
-  };
-
-  const recentBookings = [
-    {
-      id: 1,
-      service: 'Réparation moteur',
-      client: 'Jean Dupont',
-      date: '2024-02-15',
-      time: '10:00',
-      status: 'pending',
-      price: 120,
-    },
-    {
-      id: 2,
-      service: 'Vidange',
-      client: 'Marie Martin',
-      date: '2024-02-15',
-      time: '14:30',
-      status: 'accepted',
-      price: 60,
-    },
-    {
-      id: 3,
-      service: 'Dépannage urgence',
-      client: 'Pierre Durand',
-      date: '2024-02-16',
-      time: '09:00',
-      status: 'pending',
-      price: 150,
-    },
-  ];
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [statsRes, apptRes] = await Promise.all([
+          apiRequest.get('/api/stats/pro'),
+          apiRequest.get('/api/appointments'),
+        ]);
+        setStats(statsRes.data);
+        setRecentBookings((apptRes.data.appointments || []).slice(0, 5));
+      } catch (err) {
+        console.error('Dashboard load error:', err);
+      }
+      setLoading(false);
+    };
+    load();
+  }, []);
 
   const statusBadge = (status) => {
-    const classes = {
-      pending: 'badge badge-warning',
-      accepted: 'badge badge-info',
-      completed: 'badge badge-success',
-      cancelled: 'badge badge-error',
+    const map = {
+      pending: { label: 'En attente', cls: 'bg-yellow-100 text-yellow-800' },
+      accepted: { label: 'Accepté', cls: 'bg-blue-100 text-blue-800' },
+      completed: { label: 'Terminé', cls: 'bg-green-100 text-green-800' },
+      cancelled: { label: 'Annulé', cls: 'bg-red-100 text-red-800' },
+      refused: { label: 'Refusé', cls: 'bg-gray-100 text-gray-700' },
     };
-    
-    const labels = {
-      pending: 'En attente',
-      accepted: 'Accepté',
-      completed: 'Terminé',
-      cancelled: 'Annulé',
-    };
-
-    return (
-      <span className={classes[status] || 'badge'}>
-        {labels[status] || status}
-      </span>
-    );
+    const s = map[status] || { label: status, cls: 'bg-gray-100 text-gray-700' };
+    return <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${s.cls}`}>{s.label}</span>;
   };
+
+  const acceptBooking = async (id) => {
+    await apiRequest.patch(`/api/appointments/${id}/status`, { status: 'accepted' });
+    setRecentBookings(prev => prev.map(b => b._id === id ? { ...b, status: 'accepted' } : b));
+  };
+
+  const refuseBooking = async (id) => {
+    await apiRequest.patch(`/api/appointments/${id}/status`, { status: 'refused' });
+    setRecentBookings(prev => prev.map(b => b._id === id ? { ...b, status: 'refused' } : b));
+  };
+
+  if (loading) return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600" />
+    </div>
+  );
+
+  const subStatus = user?.isSubscriptionExempt ? 'Exempté (admin)' :
+    user?.subscriptionStatus === 'trialing' ? "Essai gratuit" :
+    user?.subscriptionStatus === 'active' ? `Plan ${user.subscriptionPlan === 'premium' ? 'Premium' : 'Starter'}` : 'Inactif';
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Tableau de bord - {user?.companyName}
-          </h1>
-          <p className="text-gray-600 mt-2">
-            Gérez vos réservations, services et suivez votre activité.
-          </p>
+        <div className="mb-8 flex items-start justify-between flex-wrap gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Bonjour, {user?.companyName || user?.firstName} 👋</h1>
+            <p className="text-gray-500 mt-1">Tableau de bord professionnel — {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+          </div>
+          <Link to="/pro/dashboard/subscription" className="flex items-center gap-2 bg-primary-50 border border-primary-200 text-primary-700 text-sm font-medium px-4 py-2 rounded-lg hover:bg-primary-100">
+            <CheckCircle className="w-4 h-4" /> {subStatus}
+          </Link>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="card">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <AlertCircle className="h-8 w-8 text-orange-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">En attente</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.pendingBookings}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="card">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Calendar className="h-8 w-8 text-blue-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Aujourd'hui</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.todayBookings}</p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {[
+            { icon: AlertCircle, label: 'En attente', value: stats?.pendingCount ?? '—', color: 'text-orange-600', bg: 'bg-orange-50' },
+            { icon: Calendar, label: "Aujourd'hui", value: stats?.todayCount ?? '—', color: 'text-blue-600', bg: 'bg-blue-50' },
+            { icon: DollarSign, label: 'CA du mois', value: stats ? `${stats.monthlyRevenue}€` : '—', color: 'text-green-600', bg: 'bg-green-50' },
+            { icon: Star, label: 'Note moyenne', value: stats ? `${(stats.averageRating || 0).toFixed(1)} ⭐` : '—', color: 'text-yellow-600', bg: 'bg-yellow-50' },
+          ].map(({ icon: Icon, label, value, color, bg }) => (
+            <div key={label} className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-lg ${bg} flex items-center justify-center`}>
+                  <Icon className={`w-5 h-5 ${color}`} />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 font-medium">{label}</p>
+                  <p className="text-xl font-bold text-gray-900">{value}</p>
+                </div>
               </div>
             </div>
-          </div>
-
-          <div className="card">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <DollarSign className="h-8 w-8 text-green-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">CA du mois</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.monthlyRevenue}€</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="card">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Star className="h-8 w-8 text-yellow-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Note moyenne</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {stats.averageRating}
-                  <span className="text-sm text-gray-500 ml-1">
-                    ({stats.totalReviews} avis)
-                  </span>
-                </p>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Recent Bookings */}
-          <div className="lg:col-span-2">
-            <div className="card">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-900">
-                  Réservations récentes
-                </h2>
-                <Link
-                  to="/pro/bookings"
-                  className="text-primary-600 hover:text-primary-700 font-medium"
-                >
-                  Voir tout
-                </Link>
-              </div>
-
-              <div className="space-y-4">
-                {recentBookings.map((booking) => (
-                  <div
-                    key={booking.id}
-                    className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-medium text-gray-900">
-                          {booking.service}
-                        </h3>
-                        <p className="text-sm text-gray-600">
-                          Client: {booking.client}
-                        </p>
-                        <div className="flex items-center mt-2 text-sm text-gray-500">
-                          <Clock className="w-4 h-4 mr-1" />
-                          {new Date(booking.date).toLocaleDateString('fr-FR')} à {booking.time}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="mb-2">
-                          {statusBadge(booking.status)}
-                        </div>
-                        <p className="text-lg font-semibold text-gray-900">
-                          {booking.price}€
-                        </p>
-                        {booking.status === 'pending' && (
-                          <div className="mt-2 space-x-2">
-                            <button className="text-xs bg-green-600 text-white px-2 py-1 rounded">
-                              Accepter
-                            </button>
-                            <button className="text-xs bg-red-600 text-white px-2 py-1 rounded">
-                              Refuser
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
+          <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100">
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-gray-900">Réservations récentes</h2>
+              <Link to="/pro/dashboard/bookings" className="text-sm text-primary-600 hover:text-primary-700 flex items-center gap-1">Voir tout <ArrowRight className="w-3 h-3" /></Link>
+            </div>
+            <div className="divide-y divide-gray-50">
+              {recentBookings.length === 0 ? (
+                <div className="px-6 py-10 text-center text-gray-400 text-sm">Aucune réservation pour l'instant.</div>
+              ) : recentBookings.map(b => (
+                <div key={b._id} className="px-6 py-4 flex items-center justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 truncate">{b.serviceId?.name || 'Service'}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {b.clientId?.firstName} {b.clientId?.lastName} · {new Date(b.scheduledDate).toLocaleDateString('fr-FR')} à {b.startTime}
+                    </p>
                   </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {statusBadge(b.status)}
+                    <span className="text-sm font-semibold text-gray-700">{b.finalPrice}€</span>
+                    {b.status === 'pending' && (
+                      <div className="flex gap-1">
+                        <button onClick={() => acceptBooking(b._id)} className="p-1.5 bg-green-100 text-green-700 rounded-lg hover:bg-green-200" title="Accepter"><CheckCircle className="w-4 h-4" /></button>
+                        <button onClick={() => refuseBooking(b._id)} className="p-1.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200" title="Refuser"><XCircle className="w-4 h-4" /></button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right sidebar */}
+          <div className="space-y-4">
+            {/* Quick actions */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+              <h3 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide">Accès rapide</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+          { to: '/pro/dashboard/bookings', label: 'Réservations', icon: Calendar },
+                  { to: '/pro/dashboard/schedule', label: 'Planning', icon: Clock },
+                  { to: '/pro/dashboard/services', label: 'Services', icon: TrendingUp },
+                  { to: '/pro/dashboard/stats', label: 'Statistiques', icon: Users },
+                ].map(({ to, label, icon: Icon }) => (
+                  <Link key={to} to={to} className="flex flex-col items-center gap-1 p-3 rounded-lg border border-gray-100 hover:border-primary-300 hover:bg-primary-50 text-gray-600 hover:text-primary-700 text-xs font-medium transition-colors">
+                    <Icon className="w-5 h-5" />{label}
+                  </Link>
                 ))}
               </div>
             </div>
-          </div>
 
-          {/* Quick Actions & Info */}
-          <div className="lg:col-span-1 space-y-6">
-            {/* Quick Actions */}
-            <div className="card">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">
-                Actions rapides
-              </h2>
-
-              <div className="space-y-4">
-                <Link
-                  to="/pro/services"
-                  className="block w-full btn btn-primary"
-                >
-                  Gérer mes services
-                </Link>
-
-                <Link
-                  to="/pro/schedule"
-                  className="block w-full btn btn-outline"
-                >
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Mon planning
-                </Link>
-
-                <Link
-                  to="/pro/messages"
-                  className="block w-full btn btn-outline"
-                >
-                  <MessageCircle className="w-4 h-4 mr-2" />
-                  Messages
-                </Link>
-
-                <Link
-                  to="/pro/stats"
-                  className="block w-full btn btn-outline"
-                >
-                  <TrendingUp className="w-4 h-4 mr-2" />
-                  Statistiques
-                </Link>
+            {/* Monthly chart mini */}
+            {stats?.monthlyData && stats.monthlyData.length > 0 && (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+                <h3 className="text-sm font-bold text-gray-900 mb-4">Réservations / mois</h3>
+                <div className="flex items-end gap-2 h-20">
+                  {stats.monthlyData.map((d, i) => {
+                    const maxVal = Math.max(...stats.monthlyData.map(x => x.bookings), 1);
+                    const pct = Math.round((d.bookings / maxVal) * 100);
+                    return (
+                      <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                        <div className="w-full bg-primary-500 rounded-t opacity-80" style={{ height: `${Math.max(pct, 4)}%` }} title={`${d.bookings} RDV`} />
+                        <span className="text-xs text-gray-400 leading-none">{d.month}</span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-
-            {/* Subscription Status */}
-            <div className="card">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                Abonnement
-              </h3>
-              <div className="flex items-center justify-between">
-                <span className="badge badge-success">Actif</span>
-                <Link
-                  to="/pro/subscription"
-                  className="text-sm text-primary-600 hover:text-primary-700"
-                >
-                  Gérer
-                </Link>
-              </div>
-              <p className="text-sm text-gray-600 mt-2">
-                Votre abonnement pro est actif jusqu'au 15 mars 2024.
-              </p>
-            </div>
-
-            {/* Tips Card */}
-            <div className="card">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                💡 Conseil du jour
-              </h3>
-              <p className="text-sm text-gray-600">
-                Répondez rapidement aux demandes de réservation pour améliorer 
-                votre classement et obtenir plus de clients.
-              </p>
-            </div>
+            )}
           </div>
         </div>
       </div>

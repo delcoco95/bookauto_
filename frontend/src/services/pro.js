@@ -2,7 +2,9 @@ import { apiRequest, handleApiError } from './api';
 
 export const verifySiret = async (siret) => {
   try {
-    const res = await apiRequest.post('/api/pro/verify-siret', { siret });
+    // Sanitize: remove all spaces and non-numeric chars
+    const cleanSiret = siret.replace(/\D/g, '');
+    const res = await apiRequest.post('/api/siret/verify', { siret: cleanSiret });
     return { success: true, data: res.data };
   } catch (e) {
     return { success: false, error: handleApiError(e) };

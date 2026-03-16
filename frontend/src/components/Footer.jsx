@@ -28,23 +28,22 @@ const Footer = () => {
             <ul className="space-y-2 text-sm text-gray-400">
               <li>
                 <Link to="/search?category=auto" className="hover:text-white">
-                  Auto
+                  Automobile
                 </Link>
               </li>
               <li>
-                <Link
-                  to="/search?category=plomberie"
-                  className="hover:text-white"
-                >
+                <Link to="/search?category=plomberie" className="hover:text-white">
                   Plomberie
                 </Link>
               </li>
               <li>
-                <Link
-                  to="/search?category=serrurerie"
-                  className="hover:text-white"
-                >
+                <Link to="/search?category=serrurerie" className="hover:text-white">
                   Serrurerie
+                </Link>
+              </li>
+              <li>
+                <Link to="/search?category=electricite" className="hover:text-white">
+                  Électricité
                 </Link>
               </li>
             </ul>
@@ -104,9 +103,6 @@ const Footer = () => {
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-400 text-sm">
               © {currentYear} Bookauto. Tous droits réservés.
-            </p>
-            <p className="text-gray-400 text-sm mt-2 md:mt-0">
-              Créé par Nedj Belloum & Hedi
             </p>
           </div>
         </div>
