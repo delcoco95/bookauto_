@@ -8,16 +8,16 @@ const User = require('../models/User');
 router.post('/generate/:appointmentId', protect, async (req, res) => {
   try {
     const appointment = await Appointment.findById(req.params.appointmentId)
-      .populate('pro', 'firstName lastName companyName companyAddress email phone siret')
-      .populate('client', 'firstName lastName email');
+      .populate('proId', 'firstName lastName companyName companyAddress email phone siret')
+      .populate('clientId', 'firstName lastName email');
 
     if (!appointment) return res.status(404).json({ message: 'Rendez-vous introuvable.' });
-    if (appointment.pro._id.toString() !== req.user.id) {
+    if (appointment.proId._id.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'Accès refusé.' });
     }
 
-    const pro = appointment.pro;
-    const client = appointment.client;
+    const pro = appointment.proId;
+    const client = appointment.clientId;
     const invoiceNumber = `INV-${Date.now()}`;
     const date = new Date().toLocaleDateString('fr-FR');
     const amount = appointment.finalPrice || appointment.price || 0;
@@ -66,7 +66,7 @@ td{padding:10px;border-bottom:1px solid #eee}.total{font-size:1.3em;font-weight:
 // GET /api/invoices/pro — list appointments eligible for invoice
 router.get('/pro', protect, async (req, res) => {
   try {
-    const appointments = await Appointment.find({ pro: req.user.id, status: 'completed' })
+    const appointments = await Appointment.find({ proId: req.user._id, status: 'completed' })
       .populate('client', 'firstName lastName email')
       .sort({ updatedAt: -1 });
     res.json(appointments);

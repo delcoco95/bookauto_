@@ -16,12 +16,12 @@ const getTransporter = () => nodemailer.createTransport({
 // GET /api/payouts/balance
 router.get('/balance', protect, async (req, res) => {
   try {
-    const appointments = await Appointment.find({ pro: req.user.id, status: 'completed', isPaidOut: { $ne: true } });
+    const appointments = await Appointment.find({ proId: req.user._id, status: 'completed', isPaidOut: { $ne: true } });
     const availableBalance = appointments.reduce((sum, a) => {
-      return sum + ((a.finalPrice || a.price || 0) * (1 - COMMISSION));
+      return sum + ((a.finalPrice || a.basePrice || 0) * (1 - COMMISSION));
     }, 0);
-    const allCompleted = await Appointment.find({ pro: req.user.id, status: 'completed' });
-    const totalEarned = allCompleted.reduce((sum, a) => sum + ((a.finalPrice || a.price || 0) * (1 - COMMISSION)), 0);
+    const allCompleted = await Appointment.find({ proId: req.user._id, status: 'completed' });
+    const totalEarned = allCompleted.reduce((sum, a) => sum + ((a.finalPrice || a.basePrice || 0) * (1 - COMMISSION)), 0);
     res.json({
       availableBalance: Math.round(availableBalance * 100) / 100,
       totalEarned: Math.round(totalEarned * 100) / 100,
@@ -39,12 +39,12 @@ router.post('/request', protect, async (req, res) => {
     if (!iban || !bankName || !amount) return res.status(400).json({ message: 'IBAN, nom de banque et montant requis.' });
     if (amount <= 0) return res.status(400).json({ message: 'Montant invalide.' });
 
-    const appointments = await Appointment.find({ pro: req.user.id, status: 'completed', isPaidOut: { $ne: true } });
-    const availableBalance = appointments.reduce((sum, a) => sum + ((a.finalPrice || a.price || 0) * (1 - COMMISSION)), 0);
+    const appointments = await Appointment.find({ proId: req.user._id, status: 'completed', isPaidOut: { $ne: true } });
+    const availableBalance = appointments.reduce((sum, a) => sum + ((a.finalPrice || a.basePrice || 0) * (1 - COMMISSION)), 0);
 
     if (amount > availableBalance) return res.status(400).json({ message: `Solde insuffisant. Disponible: ${availableBalance.toFixed(2)}€` });
 
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user._id);
 
     // Send email to admin
     try {

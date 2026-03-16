@@ -60,6 +60,7 @@ const requireClient = (req, res, next) => {
 
 module.exports = {
   verifyToken,
+  protect: verifyToken,   // alias used in new routes
   requirePro,
   requireClient
 };
