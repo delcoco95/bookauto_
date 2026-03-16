@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema(
   {
@@ -71,10 +71,14 @@ const userSchema = new mongoose.Schema(
     categories: [
       {
         type: String,
-        enum: ['auto', 'plomberie', 'serrurerie'],
+        enum: ['auto', 'plomberie', 'serrurerie', 'electricite'],
       },
     ],
     subCategories: [String],
+
+    // Photos/Logo
+    photos: [String],
+    logo: String,
 
     // Geolocation
     latitude: Number,
@@ -94,11 +98,19 @@ const userSchema = new mongoose.Schema(
         'past_due',
         'canceled',
         'unpaid',
+        'exempt',
       ],
       default: 'inactive',
     },
+    subscriptionPlan: {
+      type: String,
+      enum: ['starter', 'premium', null],
+      default: null,
+    },
     subscriptionId: String,
+    stripeCustomerId: String,
     subscriptionEndsAt: Date,
+    isExempt: { type: Boolean, default: false },
 
     // Schedule (pro only)
     defaultSchedule: {
@@ -115,6 +127,7 @@ const userSchema = new mongoose.Schema(
     totalRatings: { type: Number, default: 0 },
     averageRating: { type: Number, default: 0 },
     totalReviews: { type: Number, default: 0 },
+    availableBalance: { type: Number, default: 0 },
 
     // Verification
     isEmailVerified: { type: Boolean, default: false },
@@ -123,6 +136,7 @@ const userSchema = new mongoose.Schema(
     // Password reset
     passwordResetToken: String,
     passwordResetExpires: Date,
+    lastLoginAt: Date,
   },
   {
     timestamps: true,
