@@ -1,202 +1,135 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, Star, User, Clock, CheckCircle } from 'lucide-react';
+import { Calendar, Star, User, CheckCircle, Clock, Search } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { apiRequest } from '../../services/api';
+
+const statusLabels = {
+  pending: { label: 'En attente', cls: 'bg-yellow-100 text-yellow-700' },
+  accepted: { label: 'Confirmé', cls: 'bg-blue-100 text-blue-700' },
+  completed: { label: 'Terminé', cls: 'bg-green-100 text-green-700' },
+  cancelled: { label: 'Annulé', cls: 'bg-red-100 text-red-600' },
+  refused: { label: 'Refusé', cls: 'bg-red-100 text-red-600' },
+};
 
 const ClientDashboard = () => {
   const { user } = useAuth();
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data - a remplacer par de vraies donnees
-  const stats = {
-    upcomingBookings: 2,
-    completedBookings: 8,
-    pendingReviews: 1,
-  };
+  useEffect(() => {
+    apiRequest.get('/api/appointments')
+      .then(res => setBookings(res.data.appointments || []))
+      .catch(() => setBookings([]))
+      .finally(() => setLoading(false));
+  }, []);
 
-  const recentBookings = [
-    {
-      id: 1,
-      service: 'Réparation moteur',
-      pro: 'Garage Martin',
-      date: '2024-02-15',
-      status: 'accepted',
-      price: 120,
-    },
-    {
-      id: 2,
-      service: 'Dépannage plomberie',
-      pro: 'Plomberie Dupont',
-      date: '2024-02-18',
-      status: 'pending',
-      price: 80,
-    },
-  ];
-
-  const statusBadge = (status) => {
-    const classes = {
-      pending: 'badge badge-warning',
-      accepted: 'badge badge-info',
-      completed: 'badge badge-success',
-      cancelled: 'badge badge-error',
-    };
-    
-    const labels = {
-      pending: 'En attente',
-      accepted: 'Accepté',
-      completed: 'Terminé',
-      cancelled: 'Annulé',
-    };
-
-    return (
-      <span className={classes[status] || 'badge'}>
-        {labels[status] || status}
-      </span>
-    );
-  };
+  const upcoming = bookings.filter(b => ['pending','accepted'].includes(b.status));
+  const completed = bookings.filter(b => b.status === 'completed');
+  const pendingReviews = completed.length; // simplified: all completed = can review
+  const recent = bookings.slice(0, 3);
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-5xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Bonjour {user?.firstName} !
+          <h1 className="text-2xl font-bold text-gray-900">
+            Bonjour {user?.firstName} ! 👋
           </h1>
-          <p className="text-gray-600 mt-2">
-            Voici un aperçu de vos réservations et activités récentes.
-          </p>
+          <p className="text-gray-500 mt-1 text-sm">Voici un aperçu de votre activité.</p>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="card">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Calendar className="h-8 w-8 text-blue-600" />
+        {/* Stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+          {[
+            { label: 'Prochains RDV', value: upcoming.length, icon: <Calendar className="w-5 h-5 text-blue-600" />, color: 'blue' },
+            { label: 'Terminés', value: completed.length, icon: <CheckCircle className="w-5 h-5 text-green-600" />, color: 'green' },
+            { label: 'Avis à donner', value: pendingReviews, icon: <Star className="w-5 h-5 text-yellow-500" />, color: 'yellow' },
+          ].map(s => (
+            <div key={s.label} className="bg-white rounded-xl border border-gray-200 p-5 flex items-center gap-4">
+              <div className={`w-10 h-10 rounded-xl bg-${s.color}-50 flex items-center justify-center flex-shrink-0`}>
+                {s.icon}
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Prochains RDV</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.upcomingBookings}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="card">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <CheckCircle className="h-8 w-8 text-green-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Termines</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.completedBookings}</p>
+              <div>
+                <p className="text-xs text-gray-500">{s.label}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {loading ? '…' : s.value}
+                </p>
               </div>
             </div>
-          </div>
-
-          <div className="card">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Star className="h-8 w-8 text-yellow-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Avis a donner</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.pendingReviews}</p>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Recent Bookings */}
-          <div className="lg:col-span-2">
-            <div className="card">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-900">
-                  Réservations récentes
-                </h2>
-                <Link
-                  to="/client/bookings"
-                  className="text-primary-600 hover:text-primary-700 font-medium"
-                >
-                  Voir tout
-                </Link>
-              </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Recent bookings */}
+          <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-bold text-gray-900">Réservations récentes</h2>
+              <Link to="/client/bookings" className="text-sm text-blue-600 hover:underline">Voir tout</Link>
+            </div>
 
-              <div className="space-y-4">
-                {recentBookings.map((booking) => (
-                  <div
-                    key={booking.id}
-                    className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-medium text-gray-900">
-                          {booking.service}
-                        </h3>
-                        <p className="text-sm text-gray-600">
-                          {booking.pro}
+            {loading ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+            ) : recent.length === 0 ? (
+              <div className="text-center py-8 text-gray-400">
+                <Calendar className="w-10 h-10 mx-auto mb-2 opacity-40" />
+                <p className="text-sm">Aucune réservation pour le moment.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {recent.map(b => {
+                  const cfg = statusLabels[b.status] || statusLabels.pending;
+                  const proName = b.proId?.companyName || `${b.proId?.firstName || ''} ${b.proId?.lastName || ''}`.trim();
+                  return (
+                    <div key={b._id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:bg-gray-50">
+                      <div>
+                        <p className="font-medium text-sm text-gray-900">{b.serviceName || 'Prestation'}</p>
+                        <p className="text-xs text-gray-500">{proName}</p>
+                        <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+                          <Clock className="w-3 h-3" />
+                          {new Date(b.scheduledDate).toLocaleDateString('fr-FR')}
                         </p>
-                        <div className="flex items-center mt-2 text-sm text-gray-500">
-                          <Clock className="w-4 h-4 mr-1" />
-                          {new Date(booking.date).toLocaleDateString('fr-FR')}
-                        </div>
                       </div>
                       <div className="text-right">
-                        <div className="mb-2">
-                          {statusBadge(booking.status)}
-                        </div>
-                        <p className="text-lg font-semibold text-gray-900">
-                          {booking.price}€
-                        </p>
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${cfg.cls}`}>
+                          {cfg.label}
+                        </span>
+                        <p className="text-sm font-semibold text-gray-900 mt-1">{b.finalPrice?.toFixed(2)} €</p>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
-            </div>
+            )}
           </div>
 
-          {/* Quick Actions */}
-          <div className="lg:col-span-1">
-            <div className="card">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">
-                Actions rapides
-              </h2>
-
-              <div className="space-y-4">
-                <Link
-                  to="/search"
-                  className="block w-full btn btn-primary"
-                >
-                  Nouvelle reservation
+          {/* Quick actions */}
+          <div className="space-y-4">
+            <div className="bg-white rounded-xl border border-gray-200 p-6">
+              <h2 className="font-bold text-gray-900 mb-4">Actions rapides</h2>
+              <div className="space-y-3">
+                <Link to="/search" className="flex items-center gap-2 w-full py-2.5 px-4 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
+                  <Search className="w-4 h-4" />
+                  Nouvelle réservation
                 </Link>
-
-                <Link
-                  to="/client/profile"
-                  className="block w-full btn btn-outline"
-                >
-                  <User className="w-4 h-4 mr-2" />
+                <Link to="/client/profile" className="flex items-center gap-2 w-full py-2.5 px-4 border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50">
+                  <User className="w-4 h-4" />
                   Mon profil
                 </Link>
-
-                <Link
-                  to="/client/reviews"
-                  className="block w-full btn btn-outline"
-                >
-                  <Star className="w-4 h-4 mr-2" />
+                <Link to="/client/reviews" className="flex items-center gap-2 w-full py-2.5 px-4 border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50">
+                  <Star className="w-4 h-4" />
                   Mes avis
                 </Link>
               </div>
             </div>
 
-            {/* Tips Card */}
-            <div className="card mt-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                💡 Conseil
-              </h3>
-              <p className="text-sm text-gray-600">
-                N'oubliez pas de laisser un avis après vos prestations.
-                Cela aide les autres utilisateurs et améliore la qualité du service.
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+              <p className="text-sm font-medium text-blue-800 mb-1">💡 Conseil</p>
+              <p className="text-xs text-blue-700">
+                Laissez un avis après chaque prestation pour aider la communauté et améliorer la qualité des services.
               </p>
             </div>
           </div>
