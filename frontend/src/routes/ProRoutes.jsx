@@ -17,21 +17,28 @@ const ProInvoices = lazy(() => import('../pages/ProDashboard/Invoices'));
 const ProRoutes = () => {
   return (
     <ProtectedRoute requiredRole="pro">
-      <SubscriptionGuard>
-        <Routes>
-          <Route path="/" element={<ProDashboard />} />
-          <Route path="/profile" element={<ProProfile />} />
-          <Route path="/services" element={<ProServices />} />
-          <Route path="/schedule" element={<ProSchedule />} />
-          <Route path="/bookings" element={<ProBookings />} />
-          <Route path="/subscription" element={<ProSubscription />} />
-          <Route path="/subscription/success" element={<SubscriptionSuccess />} />
-          <Route path="/subscription/cancel" element={<ProSubscription />} />
-          <Route path="/stats" element={<ProStats />} />
-          <Route path="/photos" element={<ProPhotos />} />
-          <Route path="/invoices" element={<ProInvoices />} />
-        </Routes>
-      </SubscriptionGuard>
+      <Routes>
+        {/* Subscription pages: accessible even without active subscription */}
+        <Route path="/subscription" element={<ProSubscription />} />
+        <Route path="/subscription/success" element={<SubscriptionSuccess />} />
+        <Route path="/subscription/cancel" element={<ProSubscription />} />
+
+        {/* Protected routes: require active subscription */}
+        <Route path="/*" element={
+          <SubscriptionGuard>
+            <Routes>
+              <Route path="/" element={<ProDashboard />} />
+              <Route path="/profile" element={<ProProfile />} />
+              <Route path="/services" element={<ProServices />} />
+              <Route path="/schedule" element={<ProSchedule />} />
+              <Route path="/bookings" element={<ProBookings />} />
+              <Route path="/stats" element={<ProStats />} />
+              <Route path="/photos" element={<ProPhotos />} />
+              <Route path="/invoices" element={<ProInvoices />} />
+            </Routes>
+          </SubscriptionGuard>
+        } />
+      </Routes>
     </ProtectedRoute>
   );
 };

@@ -29,7 +29,28 @@ router.get('/stats', protect, isAdmin, async (req, res) => {
       Appointment.countDocuments(),
     ]);
     const activeSubs = await User.countDocuments({ role: 'pro', subscriptionStatus: { $in: ['active', 'trialing'] } });
-    res.json({ totalUsers, totalPros, totalClients, totalAppointments, activeSubs });
+
+    // Revenue: sum of finalPrice for completed appointments
+    const revenueResult = await Appointment.aggregate([
+      { $match: { status: 'completed' } },
+      { $group: { _id: null, total: { $sum: '$finalPrice' } } }
+    ]);
+    const totalRevenue = revenueResult[0]?.total || 0;
+    // Platform commission (10-15% avg 12.5%)
+    const platformCA = Math.round(totalRevenue * 0.125 * 100) / 100;
+
+    // Monthly appointments (last 6 months)
+    const now = new Date();
+    const monthlyStats = [];
+    for (let i = 5; i >= 0; i--) {
+      const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59);
+      const count = await Appointment.countDocuments({ createdAt: { $gte: start, $lte: end } });
+      const label = start.toLocaleString('fr-FR', { month: 'short' });
+      monthlyStats.push({ month: label, count });
+    }
+
+    res.json({ totalUsers, totalPros, totalClients, totalAppointments, activeSubs, totalRevenue: Math.round(totalRevenue * 100) / 100, platformCA, monthlyStats });
   } catch (error) {
     res.status(500).json({ message: 'Erreur serveur', error: error.message });
   }
