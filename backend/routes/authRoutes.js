@@ -39,27 +39,27 @@ const proRegisterValidation = [
     .if(body('role').equals('pro'))
     .trim()
     .isLength({ min: 2 })
-    .withMessage('Company name is required for professionals'),
+    .withMessage('La raison sociale est requise'),
   body('siret')
     .if(body('role').equals('pro'))
     .trim()
-    .isLength({ min: 14, max: 14 })
-    .withMessage('SIRET must be exactly 14 characters'),
+    .matches(/^\d{14}$/)
+    .withMessage('Le SIRET doit contenir exactement 14 chiffres'),
   body('companyAddress.street')
     .if(body('role').equals('pro'))
     .trim()
-    .isLength({ min: 5 })
-    .withMessage('Company address is required'),
+    .isLength({ min: 3 })
+    .withMessage('L\'adresse est requise (min. 3 caractères)'),
   body('companyAddress.city')
     .if(body('role').equals('pro'))
     .trim()
     .isLength({ min: 2 })
-    .withMessage('City is required'),
+    .withMessage('La ville est requise'),
   body('companyAddress.zipCode')
     .if(body('role').equals('pro'))
     .trim()
     .isLength({ min: 5, max: 5 })
-    .withMessage('Zip code must be exactly 5 characters'),
+    .withMessage('Le code postal doit contenir 5 chiffres'),
 ];
 
 const loginValidation = [

@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { User, Mail, Phone, Save, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useUI } from '../../context/UIContext';
+import { apiRequest } from '../../services/api';
 
 const ClientProfile = () => {
   const { user, updateUser } = useAuth();
   const { showToast } = useUI();
   const [isEditing, setIsEditing] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
@@ -20,39 +22,37 @@ const ClientProfile = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Validation basique
     if (formData.newPassword && formData.newPassword !== formData.confirmPassword) {
-      showToast('Les nouveaux mots de passe ne correspondent pas', 'error');
-      return;
+      return showToast('Les nouveaux mots de passe ne correspondent pas', 'error');
     }
-
     if (formData.newPassword && formData.newPassword.length < 6) {
-      showToast('Le nouveau mot de passe doit contenir au moins 6 caractères', 'error');
-      return;
+      return showToast('Le nouveau mot de passe doit contenir au moins 6 caractères', 'error');
     }
-
+    setSaving(true);
     try {
-      // Simulation d'update - à remplacer par vraie API
-      const updateData = {
+      const payload = {
         firstName: formData.firstName,
         lastName: formData.lastName,
         phone: formData.phone,
       };
-
-      updateUser(updateData);
+      if (formData.newPassword && formData.currentPassword) {
+        payload.currentPassword = formData.currentPassword;
+        payload.newPassword = formData.newPassword;
+      }
+      const res = await apiRequest.patch('/api/users/me', payload);
+      updateUser(res.data.user || payload);
       setIsEditing(false);
+      setFormData(prev => ({ ...prev, currentPassword: '', newPassword: '', confirmPassword: '' }));
       showToast('Profil mis à jour avec succès', 'success');
     } catch (error) {
-      showToast('Erreur lors de la mise à jour', 'error');
+      showToast(error.response?.data?.message || 'Erreur lors de la mise à jour', 'error');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -68,6 +68,7 @@ const ClientProfile = () => {
     });
     setIsEditing(false);
   };
+
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -265,10 +266,11 @@ const ClientProfile = () => {
                     </button>
                     <button
                       type="submit"
+                      disabled={saving}
                       className="btn btn-primary"
                     >
                       <Save className="w-4 h-4 mr-2" />
-                      Enregistrer
+                      {saving ? 'Enregistrement...' : 'Enregistrer'}
                     </button>
                   </div>
                 )}

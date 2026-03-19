@@ -31,18 +31,18 @@ const AuthRegisterPro = () => {
     const { name, value } = e.target;
     if (name.startsWith('companyAddress.')) {
       const key = name.split('.')[1];
-      setForm({
-        ...form,
-        companyAddress: { ...form.companyAddress, [key]: value },
-      });
+      setForm({ ...form, companyAddress: { ...form.companyAddress, [key]: value } });
     } else {
       setForm({ ...form, [name]: value });
     }
-    // Auto-verify SIRET when 14 digits are entered
-    if (name === 'siret' && value.replace(/\s/g, '').length === 14) {
-      triggerSiretCheck(value.replace(/\s/g, ''));
-    } else if (name === 'siret') {
-      setSiretValid(null);
+    // Auto-verify only when exactly 14 DIGITS are present
+    if (name === 'siret') {
+      const digits = value.replace(/\D/g, '');
+      if (digits.length === 14) {
+        triggerSiretCheck(digits);
+      } else {
+        setSiretValid(null);
+      }
     }
   };
 
@@ -91,9 +91,13 @@ const AuthRegisterPro = () => {
       return showToast('Les mots de passe ne correspondent pas', 'error');
     if (form.categories.length === 0)
       return showToast("Veuillez sélectionner au moins un domaine d'activité", 'error');
+    const digits = form.siret.replace(/\D/g, '');
+    if (digits.length !== 14)
+      return showToast('Le SIRET doit contenir exactement 14 chiffres', 'error');
+
     setSubmitting(true);
     try {
-      const payload = { ...form, siret: form.siret.replace(/\D/g, '') };
+      const payload = { ...form, siret: digits };
       delete payload.confirmPassword;
       const res = await register(payload);
       if (res.success) {
