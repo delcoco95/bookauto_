@@ -52,8 +52,8 @@ const AuthRegisterPro = () => {
     setChecking(false);
     if (res.success) {
       setSiretValid(true);
-      if (res.data.companyInfo?.companyName)
-        setForm(prev => ({ ...prev, companyName: res.data.companyInfo.companyName }));
+      if (res.data.companyName)
+        setForm(prev => ({ ...prev, companyName: res.data.companyName }));
     } else {
       setSiretValid(false);
     }
@@ -76,8 +76,8 @@ const AuthRegisterPro = () => {
     setChecking(false);
     if (res.success) {
       setSiretValid(true);
-      if (res.data.companyInfo?.companyName)
-        setForm(prev => ({ ...prev, companyName: res.data.companyInfo.companyName }));
+      if (res.data.companyName)
+        setForm(prev => ({ ...prev, companyName: res.data.companyName }));
       showToast('SIRET validé', 'success');
     } else {
       setSiretValid(false);

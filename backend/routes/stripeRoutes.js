@@ -38,8 +38,8 @@ router.post('/create-checkout', protect, async (req, res) => {
       line_items: [{ price: priceId, quantity: 1 }],
       mode: 'subscription',
       subscription_data: { trial_period_days: 30 },
-      success_url: `${process.env.FRONTEND_URL}/dashboard/pro/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.FRONTEND_URL}/dashboard/pro/subscription`,
+      success_url: `${process.env.FRONTEND_URL}/pro/dashboard/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.FRONTEND_URL}/pro/dashboard/subscription`,
       metadata: { userId: user._id.toString(), plan },
     });
 
@@ -54,19 +54,17 @@ router.post('/create-checkout', protect, async (req, res) => {
 router.get('/verify-session/:sessionId', protect, async (req, res) => {
   try {
     const session = await stripe.checkout.sessions.retrieve(req.params.sessionId);
-    if (session.payment_status === 'paid' || session.status === 'complete') {
+    if (session.status === 'complete') {
       const user = await User.findById(req.user.id);
       const plan = session.metadata?.plan || 'starter';
-      user.subscriptionStatus = 'active';
+      // With trial, payment_status is 'no_payment_required' — status is still 'trialing'
+      const subStatus = session.payment_status === 'paid' ? 'active' : 'trialing';
+      user.subscriptionStatus = subStatus;
       user.subscriptionPlan = plan;
       user.subscriptionId = session.subscription;
       user.subscriptionEndsAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
       await user.save();
-      return res.json({ success: true, plan });
-    }
-    // Trial period
-    if (session.status === 'complete') {
-      return res.json({ success: true });
+      return res.json({ success: true, plan, status: subStatus });
     }
     res.json({ success: false, status: session.status });
   } catch (error) {
@@ -130,6 +128,66 @@ router.post('/cancel', protect, async (req, res) => {
   } catch (error) {
     console.error('Cancel subscription error:', error);
     res.status(500).json({ message: 'Erreur lors de l\'annulation.', error: error.message });
+  }
+});
+
+// POST /api/stripe/reactivate — reactivate or restart subscription
+router.post('/reactivate', protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'Utilisateur introuvable.' });
+
+    if (user.subscriptionId) {
+      try {
+        const sub = await stripe.subscriptions.retrieve(user.subscriptionId);
+        if (sub && sub.status !== 'canceled') {
+          await stripe.subscriptions.update(user.subscriptionId, { cancel_at_period_end: false });
+          await User.findByIdAndUpdate(user._id, { subscriptionStatus: sub.status });
+          return res.json({ success: true, message: 'Abonnement réactivé avec succès.' });
+        }
+      } catch (_) {}
+    }
+
+    return res.json({ requiresNewCheckout: true });
+  } catch (error) {
+    console.error('Reactivate error:', error);
+    res.status(500).json({ message: 'Erreur lors de la réactivation.', error: error.message });
+  }
+});
+
+// GET /api/stripe/subscription — get current subscription status
+router.get('/subscription', protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'Utilisateur introuvable.' });
+
+    if (user.isExempt) {
+      return res.json({ status: 'exempt', plan: user.subscriptionPlan || 'starter', cancelAtPeriodEnd: false });
+    }
+
+    if (!user.subscriptionId) {
+      return res.json({ status: user.subscriptionStatus || 'none', plan: user.subscriptionPlan || null });
+    }
+
+    try {
+      const sub = await stripe.subscriptions.retrieve(user.subscriptionId);
+      return res.json({
+        status: sub.status,
+        plan: user.subscriptionPlan,
+        cancelAtPeriodEnd: sub.cancel_at_period_end,
+        currentPeriodEnd: new Date(sub.current_period_end * 1000).toISOString(),
+      });
+    } catch (_) {
+      return res.json({
+        status: user.subscriptionStatus || 'none',
+        plan: user.subscriptionPlan,
+        cancelAtPeriodEnd: false,
+        currentPeriodEnd: user.subscriptionEndsAt,
+      });
+    }
+  } catch (error) {
+    console.error('Get subscription error:', error);
+    res.status(500).json({ message: 'Erreur lors de la récupération de l\'abonnement.', error: error.message });
   }
 });
 
