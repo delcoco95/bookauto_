@@ -10,7 +10,7 @@ const SUB_CATEGORIES = {
   serrurerie:  ['Ouverture de porte', 'Installation serrure', 'Sécurité', 'Dépannage', 'Blindage', 'Autre'],
 };
 
-const CATEGORY_LABELS = { auto: 'Automobile', plomberie: 'Plomberie', serrurerie: 'Serrurerie' };
+const CATEGORY_LABELS = { auto: 'Automobile', plomberie: 'Plomberie', serrurerie: 'Serrurerie', electricite: 'Électricité' };
 
 const ProServices = () => {
   const { user } = useAuth();

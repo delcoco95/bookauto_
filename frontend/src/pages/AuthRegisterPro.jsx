@@ -279,20 +279,25 @@ const AuthRegisterPro = () => {
           </div>
 
           <div>
-            <label className="block text-sm mb-2">Domaines</label>
-            <div className="grid grid-cols-3 gap-3">
-              {['auto', 'plomberie', 'serrurerie'].map((id) => (
+            <label className="block text-sm mb-2">Domaines d'activité</label>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { id: 'auto', label: '🚗 Automobile' },
+                { id: 'plomberie', label: '🔧 Plomberie' },
+                { id: 'serrurerie', label: '🔑 Serrurerie' },
+                { id: 'electricite', label: '⚡ Électricité' },
+              ].map(({ id, label }) => (
                 <label
                   key={id}
-                  className={`p-2 border rounded ${form.categories.includes(id) ? 'border-primary-500 bg-primary-50' : 'border-gray-300'}`}
+                  className={`p-3 border rounded-lg cursor-pointer flex items-center gap-2 ${form.categories.includes(id) ? 'border-primary-500 bg-primary-50' : 'border-gray-300 hover:border-gray-400'}`}
                 >
                   <input
                     type="checkbox"
-                    className="mr-2"
+                    className="mr-1"
                     checked={form.categories.includes(id)}
                     onChange={() => toggleCat(id)}
                   />
-                  {id}
+                  {label}
                 </label>
               ))}
             </div>

@@ -17,7 +17,7 @@ router.get('/mine', async (req, res) => {
 
 const validators = [
   body('name').trim().isLength({ min: 2, max: 100 }),
-  body('category').isIn(['auto', 'plomberie', 'serrurerie']),
+  body('category').isIn(['auto', 'plomberie', 'serrurerie', 'electricite']),
   body('subCategory').trim().isLength({ min: 2 }),
   body('durationMinutes').isInt({ min: 15, max: 480 }),
   body('priceTTC').isFloat({ min: 0 }),

@@ -17,6 +17,10 @@ const appointmentSchema = new mongoose.Schema({
     required: true,
   },
   
+  // Service info (can be inline instead of ref for flexibility)
+  serviceName: { type: String },
+  paymentMode: { type: String, enum: ['deposit', 'full'], default: 'deposit' },
+
   // Timing
   scheduledDate: {
     type: Date,

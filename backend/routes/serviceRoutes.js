@@ -9,7 +9,7 @@ const router = express.Router();
 // Search services with geolocation
 router.get('/', [
   query('location').optional().trim(),
-  query('category').optional().isIn(['auto', 'plomberie', 'serrurerie']),
+  query('category').optional().isIn(['auto', 'plomberie', 'serrurerie', 'electricite']),
   query('subCategory').optional().trim(),
   query('lat').optional().isFloat(),
   query('lng').optional().isFloat(),

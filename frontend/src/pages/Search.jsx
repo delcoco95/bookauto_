@@ -16,9 +16,10 @@ const categoryImages = {
   auto: 'https://images.unsplash.com/photo-1487754180451-c456f719a1fc?w=400&q=80',
   plomberie: 'https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=400&q=80',
   serrurerie: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80',
+  electricite: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400&q=80',
 };
-const categoryLabels = { auto: 'Automobile', plomberie: 'Plomberie', serrurerie: 'Serrurerie' };
-const categoryColors = { auto: 'bg-blue-100 text-blue-700', plomberie: 'bg-cyan-100 text-cyan-700', serrurerie: 'bg-amber-100 text-amber-700' };
+const categoryLabels = { auto: 'Automobile', plomberie: 'Plomberie', serrurerie: 'Serrurerie', electricite: 'Électricité' };
+const categoryColors = { auto: 'bg-blue-100 text-blue-700', plomberie: 'bg-cyan-100 text-cyan-700', serrurerie: 'bg-amber-100 text-amber-700', electricite: 'bg-yellow-100 text-yellow-700' };
 
 function MapRecenter({ center }) {
   const map = useMap();
