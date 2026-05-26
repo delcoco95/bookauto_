@@ -49,9 +49,8 @@ const login = async (req, res) => {
       { expiresIn: '1h' }
     );
 
-    // Update last login (optional)
-    user.lastLoginAt = new Date();
-    await user.save();
+    // Update last login
+    await User.findByIdAndUpdate(user._id, { lastLoginAt: new Date() });
 
     // Return user data (without password) and token
     const userResponse = user.toObject();

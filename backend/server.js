@@ -23,6 +23,9 @@ const invoiceRoutes = require('./routes/invoiceRoutes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Trust reverse proxy (required on Render/Heroku for correct req.ip / rate limiting)
+app.set('trust proxy', 1);
+
 // Connect to MongoDB
 connectDB();
 
